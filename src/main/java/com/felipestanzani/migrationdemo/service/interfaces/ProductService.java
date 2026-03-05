@@ -1,4 +1,4 @@
-package com.felipestanzani.migrationdemo.service.contract;
+package com.felipestanzani.migrationdemo.service.interfaces;
 
 import com.felipestanzani.migrationdemo.dto.ProductRequest;
 import com.felipestanzani.migrationdemo.dto.ProductResponse;
