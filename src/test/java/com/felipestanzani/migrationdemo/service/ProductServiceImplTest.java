@@ -3,6 +3,7 @@ package com.felipestanzani.migrationdemo.service;
 import com.felipestanzani.migrationdemo.dto.ProductRequest;
 import com.felipestanzani.migrationdemo.dto.ProductResponse;
 import com.felipestanzani.migrationdemo.exception.ForcedFallbackException;
+import com.felipestanzani.migrationdemo.exception.ProductNotFoundException;
 import com.felipestanzani.migrationdemo.model.Product;
 import com.felipestanzani.migrationdemo.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,9 +17,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -178,6 +181,51 @@ class ProductServiceImplTest {
             List<ProductResponse> result = productService.findAll();
 
             assertThat(result).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("findById")
+    class FindByIdTests {
+
+        @Test
+        @DisplayName("should return product when product exists")
+        void shouldReturnProductWhenExists() {
+            UUID productId = product1.getId();
+            when(repository.findById(productId)).thenReturn(Optional.of(product1));
+
+            Product result = productService.findById(productId);
+
+            assertThat(result).isNotNull();
+            assertThat(result.getId()).isEqualTo(productId);
+            assertThat(result.getName()).isEqualTo("Product A");
+            assertThat(result.getPrice()).isEqualTo(10.0);
+            verify(repository).findById(productId);
+        }
+
+        @Test
+        @DisplayName("should throw ProductNotFoundException when product does not exist")
+        void shouldThrowExceptionWhenProductNotFound() {
+            UUID nonExistentId = UUID.randomUUID();
+            when(repository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> productService.findById(nonExistentId))
+                    .isInstanceOf(ProductNotFoundException.class)
+                    .hasMessage("Product not found with id: " + nonExistentId);
+            verify(repository).findById(nonExistentId);
+        }
+
+        @Test
+        @DisplayName("should return correct product from repository")
+        void shouldReturnCorrectProductFromRepository() {
+            UUID productId = product2.getId();
+            when(repository.findById(productId)).thenReturn(Optional.of(product2));
+
+            Product result = productService.findById(productId);
+
+            assertThat(result).isSameAs(product2);
+            assertThat(result.getName()).isEqualTo("Product B");
+            assertThat(result.getPrice()).isEqualTo(20.0);
         }
     }
 }
