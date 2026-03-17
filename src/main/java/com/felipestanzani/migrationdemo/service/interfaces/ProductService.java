@@ -5,6 +5,7 @@ import com.felipestanzani.migrationdemo.dto.ProductResponse;
 import com.felipestanzani.migrationdemo.model.Product;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface ProductService {
     Product save(ProductRequest request);
@@ -12,4 +13,6 @@ public interface ProductService {
     List<String> findAllNames();
 
     List<ProductResponse> findAll();
+
+    Product findById(UUID id);
 }

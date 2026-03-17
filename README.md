@@ -33,8 +33,10 @@ Run tests:
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/v1/products` | Returns a list of product names |
+| GET | `/api/v1/products/{id}` | Returns a specific product by ID |
 | POST | `/api/v1/products` | Creates a product |
 | GET | `/api/v2/products` | Returns a list of products (name, price) |
+| GET | `/api/v2/products/{id}` | Returns a specific product by ID |
 | POST | `/api/v2/products` | Creates a product |
 
 **Create product** (v1 or v2): send a JSON body:
@@ -44,6 +46,56 @@ Run tests:
 ```
 
 API documentation is available via Swagger UI at `/swagger-ui.html` when the application is running.
+
+## Error Handling
+
+The application implements a global exception handler using `@RestControllerAdvice` that follows the **RFC 7807 Problem Details** standard. All error responses include:
+
+- `type`: URI reference identifying the problem type
+- `title`: Short, human-readable summary
+- `status`: HTTP status code
+- `detail`: Human-readable explanation
+- `instance`: URI reference identifying the specific occurrence
+- `timestamp`: When the error occurred
+
+### Example Error Response (404 Not Found)
+
+```json
+{
+  "type": "about:blank",
+  "title": "Not Found",
+  "status": 404,
+  "detail": "Product not found with id: 123e4567-e89b-12d3-a456-426614174000",
+  "instance": "/api/v1/products/123e4567-e89b-12d3-a456-426614174000",
+  "timestamp": "2026-03-17T10:30:00",
+  "errors": {}
+}
+```
+
+### Example Validation Error Response (400 Bad Request)
+
+```json
+{
+  "type": "about:blank",
+  "title": "Validation Failed",
+  "status": 400,
+  "detail": "Request validation failed. Check the validationErrors field for details.",
+  "instance": "/api/v1/products",
+  "timestamp": "2026-03-17T10:30:00",
+  "validationErrors": {
+    "name": "must not be blank",
+    "price": "must be greater than 0"
+  }
+}
+```
+
+### Supported Error Types
+
+- **400 Bad Request**: Validation errors (invalid input)
+- **404 Not Found**: Resource not found (e.g., product by ID)
+- **405 Method Not Allowed**: Unsupported HTTP method
+- **500 Internal Server Error**: Unexpected server errors
+- **503 Service Unavailable**: Service temporarily unavailable (resilience fallback)
 
 ## Request flow
 
@@ -62,18 +114,28 @@ flowchart LR
 ```
 src/main/java/com/felipestanzani/migrationdemo/
 ├── MigrationdemoApplication.java   # Main application class
+├── component/
+│   └── CustomHealthIndicator.java  # Custom health check
+├── config/
+│   └── OpenApiConfig.java           # Swagger/OpenAPI configuration
 ├── controller/
-│   ├── ProductControllerV1.java   # API v1: product names
-│   └── ProductControllerV2.java   # API v2: full product responses
+│   ├── ProductControllerV1.java     # API v1: product names
+│   └── ProductControllerV2.java     # API v2: full product responses
 ├── dto/
+│   ├── ErrorResponse.java           # RFC 7807 error response
 │   ├── ProductRequest.java
-│   └── ProductResponse.java
+│   ├── ProductResponse.java
+│   └── ValidationErrorResponse.java # Validation error response
+├── exception/
+│   ├── ForcedFallbackException.java # Resilience4j fallback exception
+│   ├── GlobalExceptionHandler.java  # @RestControllerAdvice handler
+│   └── ProductNotFoundException.java # Custom business exception
 ├── model/
 │   └── Product.java
 ├── repository/
 │   └── ProductRepository.java
 └── service/
-    ├── contract/
+    ├── interfaces/
     │   └── ProductService.java
     └── ProductServiceImpl.java
 ```

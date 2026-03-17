@@ -3,6 +3,7 @@ package com.felipestanzani.migrationdemo.service;
 import com.felipestanzani.migrationdemo.dto.ProductRequest;
 import com.felipestanzani.migrationdemo.dto.ProductResponse;
 import com.felipestanzani.migrationdemo.exception.ForcedFallbackException;
+import com.felipestanzani.migrationdemo.exception.ProductNotFoundException;
 import com.felipestanzani.migrationdemo.model.Product;
 import com.felipestanzani.migrationdemo.repository.ProductRepository;
 import com.felipestanzani.migrationdemo.service.interfaces.ProductService;
@@ -13,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @AllArgsConstructor
@@ -58,5 +60,11 @@ public class ProductServiceImpl implements ProductService {
                 .stream()
                 .map(p -> new ProductResponse(p.getName(), p.getPrice()))
                 .toList();
+    }
+
+    @Override
+    public Product findById(UUID id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException(id));
     }
 }
