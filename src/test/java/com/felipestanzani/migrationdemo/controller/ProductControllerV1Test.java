@@ -1,6 +1,7 @@
 package com.felipestanzani.migrationdemo.controller;
 
 import com.felipestanzani.migrationdemo.dto.ProductRequest;
+import com.felipestanzani.migrationdemo.exception.ProductNotFoundException;
 import com.felipestanzani.migrationdemo.model.Product;
 import com.felipestanzani.migrationdemo.service.interfaces.ProductService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -165,6 +166,62 @@ class ProductControllerV1Test {
                     .andExpect(MockMvcResultMatchers.jsonPath("$[0]").value("Single Product"));
 
             verify(productService).findAllNames();
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/v1/products/{id}")
+    class GetProductByIdTests {
+
+        @Test
+        @DisplayName("should return 200 with product when product exists")
+        void shouldReturn200WithProductWhenProductExists() throws Exception {
+            UUID productId = UUID.randomUUID();
+            Product product = new Product();
+            product.setId(productId);
+            product.setName("Test Product");
+            product.setPrice(29.99);
+
+            when(productService.findById(productId)).thenReturn(product);
+
+            mockMvc.perform(get("/api/v1/products/{id}", productId))
+                    .andExpect(MockMvcResultMatchers.status().isOk())
+                    .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(productId.toString()))
+                    .andExpect(MockMvcResultMatchers.jsonPath("$.name").value("Test Product"))
+                    .andExpect(MockMvcResultMatchers.jsonPath("$.price").value(29.99));
+
+            verify(productService).findById(productId);
+        }
+
+        @Test
+        @DisplayName("should return 404 when product does not exist")
+        void shouldReturn404WhenProductDoesNotExist() throws Exception {
+            UUID nonExistentId = UUID.randomUUID();
+
+            when(productService.findById(nonExistentId))
+                    .thenThrow(new ProductNotFoundException(nonExistentId));
+
+            mockMvc.perform(get("/api/v1/products/{id}", nonExistentId))
+                    .andExpect(MockMvcResultMatchers.status().isNotFound());
+
+            verify(productService).findById(nonExistentId);
+        }
+
+        @Test
+        @DisplayName("should delegate to productService findById with correct id")
+        void shouldDelegateToProductServiceFindById() throws Exception {
+            UUID productId = UUID.randomUUID();
+            Product product = new Product();
+            product.setId(productId);
+            product.setName("Another Product");
+            product.setPrice(99.99);
+
+            when(productService.findById(productId)).thenReturn(product);
+
+            mockMvc.perform(get("/api/v1/products/{id}", productId))
+                    .andExpect(MockMvcResultMatchers.status().isOk());
+
+            verify(productService).findById(productId);
         }
     }
 }
