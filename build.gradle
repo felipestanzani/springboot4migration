@@ -18,10 +18,29 @@ configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
 	}
+	integrationTestImplementation.extendsFrom testImplementation
+	integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
 }
 
 repositories {
 	mavenCentral()
+}
+
+sourceSets {
+	integrationTest {
+		java {
+			srcDir 'src/integrationTest/java'
+		}
+		resources {
+			srcDir 'src/integrationTest/resources'
+		}
+		compileClasspath += sourceSets.main.output
+		runtimeClasspath += sourceSets.main.output
+	}
+}
+
+processIntegrationTestResources {
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 ext {
@@ -53,4 +72,19 @@ dependencyManagement {
 tasks.named('test') {
 	outputs.dir snippetsDir
 	useJUnitPlatform()
+	description = 'Runs unit tests'
+	group = 'verification'
 }
+
+tasks.register('integrationTest', Test) {
+	description = 'Runs integration tests'
+	group = 'verification'
+	testClassesDirs = sourceSets.integrationTest.output.classesDirs
+	classpath = sourceSets.integrationTest.runtimeClasspath
+	shouldRunAfter test
+	useJUnitPlatform()
+
+	outputs.upToDateWhen { false }
+}
+
+check.dependsOn integrationTest

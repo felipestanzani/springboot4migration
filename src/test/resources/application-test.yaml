@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: migrationdemo-test
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+  h2:
+    console:
+      enabled: false
+
+management:
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: "health,info"
+
+resilience4j:
+  retry:
+    instances:
+      findAllNames:
+        max-attempts: 3
+        wait-duration: 500ms
+
+logging:
+  level:
+    com.felipestanzani.migrationdemo: DEBUG
+    org.springframework: WARN
+    org.hibernate: WARN
