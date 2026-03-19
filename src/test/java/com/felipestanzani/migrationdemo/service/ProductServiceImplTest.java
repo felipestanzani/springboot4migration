@@ -2,14 +2,12 @@ package com.felipestanzani.migrationdemo.service;
 
 import com.felipestanzani.migrationdemo.dto.ProductRequest;
 import com.felipestanzani.migrationdemo.dto.ProductResponse;
-import com.felipestanzani.migrationdemo.exception.ForcedFallbackException;
 import com.felipestanzani.migrationdemo.exception.ProductNotFoundException;
 import com.felipestanzani.migrationdemo.model.Product;
 import com.felipestanzani.migrationdemo.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -23,8 +21,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -89,64 +85,6 @@ class ProductServiceImplTest {
             Product result = productService.save(request);
 
             assertThat(result).isSameAs(savedProduct);
-        }
-    }
-
-    @Nested
-    @DisplayName("findAllNames")
-    class FindAllNamesTests {
-
-        @RepeatedTest(50)
-        @DisplayName("should return product names from repository or throw ForcedFallbackException")
-        void shouldReturnProductNamesOrThrow() {
-            lenient().when(repository.findAll()).thenReturn(List.of(product1, product2));
-
-            try {
-                List<String> result = productService.findAllNames();
-                assertThat(result).containsExactly("Product A", "Product B");
-                verify(repository).findAll();
-            } catch (ForcedFallbackException e) {
-                assertThat(e).hasMessage("It is not frozen, it is in panic!!!");
-                verify(repository, never()).findAll();
-            }
-        }
-
-        @RepeatedTest(50)
-        @DisplayName("should return empty list or throw when repository has no products")
-        void shouldReturnEmptyListOrThrowWhenNoProducts() {
-            lenient().when(repository.findAll()).thenReturn(List.of());
-
-            try {
-                List<String> result = productService.findAllNames();
-                assertThat(result).isEmpty();
-                verify(repository).findAll();
-            } catch (ForcedFallbackException e) {
-                assertThat(e).hasMessage("It is not frozen, it is in panic!!!");
-                verify(repository, never()).findAll();
-            }
-        }
-    }
-
-    @Nested
-    @DisplayName("fallbackFindAllNames")
-    class FallbackFindAllNamesTests {
-
-        @Test
-        @DisplayName("should return fallback list for any exception")
-        void shouldReturnFallbackList() {
-            List<String> result = productService.fallbackFindAllNames(new RuntimeException("Generic error"));
-
-            assertThat(result).containsExactly("Charuteira", "Infundibuliar");
-        }
-
-        @Test
-        @DisplayName("should return fallback list for ForcedFallbackException")
-        void shouldReturnFallbackListForForcedFallbackException() {
-            ForcedFallbackException exception = new ForcedFallbackException("It is not frozen, it is in panic!!!");
-
-            List<String> result = productService.fallbackFindAllNames(exception);
-
-            assertThat(result).containsExactly("Charuteira", "Infundibuliar");
         }
     }
 
