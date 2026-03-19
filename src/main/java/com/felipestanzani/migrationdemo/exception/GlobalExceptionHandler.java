@@ -74,26 +74,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
-    @ExceptionHandler(ForcedFallbackException.class)
-    public ResponseEntity<ErrorResponse> handleForcedFallbackException(
-            ForcedFallbackException ex,
-            HttpServletRequest request) {
-
-        log.warn("Forced fallback exception: {}", ex.getMessage());
-
-        ErrorResponse response = new ErrorResponse(
-                PROBLEM_TYPE_BLANK,
-                "Service Unavailable",
-                HttpStatus.SERVICE_UNAVAILABLE.value(),
-                ex.getMessage(),
-                request.getRequestURI(),
-                LocalDateTime.now(),
-                new HashMap<>()
-        );
-
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
-    }
-
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ErrorResponse> handleMethodNotSupported(
             HttpRequestMethodNotSupportedException ex,

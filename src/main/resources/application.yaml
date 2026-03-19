@@ -10,10 +10,3 @@ management:
     web:
       exposure:
         include: "health,info"
-
-resilience4j:
-  retry:
-    instances:
-      findAllNames:
-        max-attempts: 3
-        wait-duration: 500ms

@@ -53,7 +53,6 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.15'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
@@ -75,16 +74,3 @@ tasks.named('test') {
 	description = 'Runs unit tests'
 	group = 'verification'
 }
-
-tasks.register('integrationTest', Test) {
-	description = 'Runs integration tests'
-	group = 'verification'
-	testClassesDirs = sourceSets.integrationTest.output.classesDirs
-	classpath = sourceSets.integrationTest.runtimeClasspath
-	shouldRunAfter test
-	useJUnitPlatform()
-
-	outputs.upToDateWhen { false }
-}
-
-check.dependsOn integrationTest

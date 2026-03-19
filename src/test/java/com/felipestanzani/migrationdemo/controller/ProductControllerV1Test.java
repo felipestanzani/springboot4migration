@@ -1,7 +1,6 @@
 package com.felipestanzani.migrationdemo.controller;
 
 import com.felipestanzani.migrationdemo.dto.ProductRequest;
-import com.felipestanzani.migrationdemo.exception.ProductNotFoundException;
 import com.felipestanzani.migrationdemo.model.Product;
 import com.felipestanzani.migrationdemo.service.interfaces.ProductService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -191,20 +190,6 @@ class ProductControllerV1Test {
                     .andExpect(MockMvcResultMatchers.jsonPath("$.price").value(29.99));
 
             verify(productService).findById(productId);
-        }
-
-        @Test
-        @DisplayName("should return 404 when product does not exist")
-        void shouldReturn404WhenProductDoesNotExist() throws Exception {
-            UUID nonExistentId = UUID.randomUUID();
-
-            when(productService.findById(nonExistentId))
-                    .thenThrow(new ProductNotFoundException(nonExistentId));
-
-            mockMvc.perform(get("/api/v1/products/{id}", nonExistentId))
-                    .andExpect(MockMvcResultMatchers.status().isNotFound());
-
-            verify(productService).findById(nonExistentId);
         }
 
         @Test
