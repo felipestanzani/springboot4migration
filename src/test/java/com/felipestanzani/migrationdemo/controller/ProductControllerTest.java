@@ -4,7 +4,6 @@ import com.felipestanzani.migrationdemo.dto.ProductRequest;
 import com.felipestanzani.migrationdemo.dto.ProductResponse;
 import com.felipestanzani.migrationdemo.model.Product;
 import com.felipestanzani.migrationdemo.service.interfaces.ProductService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -14,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 import java.util.UUID;
@@ -34,10 +34,11 @@ class ProductControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private JsonMapper jsonMapper;
+
     @MockitoBean
     private ProductService productService;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Nested
     @DisplayName("POST /api/products")
@@ -56,7 +57,7 @@ class ProductControllerTest {
 
             mockMvc.perform(post("/api/products")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
+                            .content(jsonMapper.writeValueAsString(request)))
                     .andExpect(MockMvcResultMatchers.status().isCreated())
                     .andExpect(MockMvcResultMatchers.jsonPath("$.name").value("New Product"))
                     .andExpect(MockMvcResultMatchers.jsonPath("$.price").value(15.99))
@@ -78,7 +79,7 @@ class ProductControllerTest {
 
             mockMvc.perform(post("/api/products")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
+                            .content(jsonMapper.writeValueAsString(request)))
                     .andExpect(MockMvcResultMatchers.status().isCreated());
 
             verify(productService).save(any(ProductRequest.class));
@@ -91,7 +92,7 @@ class ProductControllerTest {
 
             mockMvc.perform(post("/api/products")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
+                            .content(jsonMapper.writeValueAsString(request)))
                     .andExpect(MockMvcResultMatchers.status().isBadRequest());
 
             verify(productService, never()).save(any(ProductRequest.class));
@@ -117,7 +118,7 @@ class ProductControllerTest {
 
             mockMvc.perform(post("/api/products")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
+                            .content(jsonMapper.writeValueAsString(request)))
                     .andExpect(MockMvcResultMatchers.status().isBadRequest());
 
             verify(productService, never()).save(any(ProductRequest.class));
