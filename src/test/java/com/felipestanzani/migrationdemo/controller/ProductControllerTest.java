@@ -1,6 +1,7 @@
 package com.felipestanzani.migrationdemo.controller;
 
 import com.felipestanzani.migrationdemo.dto.ProductRequest;
+import com.felipestanzani.migrationdemo.dto.ProductResponse;
 import com.felipestanzani.migrationdemo.model.Product;
 import com.felipestanzani.migrationdemo.service.interfaces.ProductService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,9 +9,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
@@ -23,22 +24,23 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(ProductControllerV1.class)
-@DisplayName("ProductControllerV1")
-class ProductControllerV1Test {
+@WebMvcTest(ProductController.class)
+@DisplayName("ProductController")
+class ProductControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockBean
+    @MockitoBean
     private ProductService productService;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @Nested
-    @DisplayName("POST /api/v1/products")
+    @DisplayName("POST /api/products")
     class CreateProductTests {
 
         @Test
@@ -52,7 +54,7 @@ class ProductControllerV1Test {
 
             when(productService.save(any(ProductRequest.class))).thenReturn(savedProduct);
 
-            mockMvc.perform(post("/api/v1/products")
+            mockMvc.perform(post("/api/products")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(MockMvcResultMatchers.status().isCreated())
@@ -74,7 +76,7 @@ class ProductControllerV1Test {
 
             when(productService.save(any(ProductRequest.class))).thenReturn(savedProduct);
 
-            mockMvc.perform(post("/api/v1/products")
+            mockMvc.perform(post("/api/products")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(MockMvcResultMatchers.status().isCreated());
@@ -87,7 +89,7 @@ class ProductControllerV1Test {
         void shouldReturn400WhenNameIsBlank() throws Exception {
             ProductRequest request = new ProductRequest("", 15.99);
 
-            mockMvc.perform(post("/api/v1/products")
+            mockMvc.perform(post("/api/products")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(MockMvcResultMatchers.status().isBadRequest());
@@ -100,7 +102,7 @@ class ProductControllerV1Test {
         void shouldReturn400WhenPriceIsNull() throws Exception {
             String requestBody = "{\"name\":\"Product\",\"price\":null}";
 
-            mockMvc.perform(post("/api/v1/products")
+            mockMvc.perform(post("/api/products")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(requestBody))
                     .andExpect(MockMvcResultMatchers.status().isBadRequest());
@@ -113,7 +115,7 @@ class ProductControllerV1Test {
         void shouldReturn400WhenPriceIsNonPositive() throws Exception {
             ProductRequest request = new ProductRequest("Product", -1.0);
 
-            mockMvc.perform(post("/api/v1/products")
+            mockMvc.perform(post("/api/products")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(MockMvcResultMatchers.status().isBadRequest());
@@ -123,7 +125,7 @@ class ProductControllerV1Test {
     }
 
     @Nested
-    @DisplayName("GET /api/v1/products")
+    @DisplayName("GET /api/products V1")
     class GetProductsTests {
 
         @Test
@@ -132,7 +134,8 @@ class ProductControllerV1Test {
             List<String> names = List.of("Product A", "Product B");
             when(productService.findAllNames()).thenReturn(names);
 
-            mockMvc.perform(get("/api/v1/products"))
+            mockMvc.perform(get("/api/products")
+                            .header("X-API-Version", "v1"))
                     .andExpect(MockMvcResultMatchers.status().isOk())
                     .andExpect(MockMvcResultMatchers.jsonPath("$").isArray())
                     .andExpect(MockMvcResultMatchers.jsonPath("$.length()").value(2))
@@ -147,7 +150,8 @@ class ProductControllerV1Test {
         void shouldReturnEmptyListWhenNoProducts() throws Exception {
             when(productService.findAllNames()).thenReturn(List.of());
 
-            mockMvc.perform(get("/api/v1/products"))
+            mockMvc.perform(get("/api/products")
+                            .header("X-API-Version", "v1"))
                     .andExpect(MockMvcResultMatchers.status().isOk())
                     .andExpect(MockMvcResultMatchers.jsonPath("$").isArray())
                     .andExpect(MockMvcResultMatchers.jsonPath("$.length()").value(0));
@@ -160,7 +164,8 @@ class ProductControllerV1Test {
         void shouldDelegateToProductServiceFindAllNames() throws Exception {
             when(productService.findAllNames()).thenReturn(List.of("Single Product"));
 
-            mockMvc.perform(get("/api/v1/products"))
+            mockMvc.perform(get("/api/products")
+                            .header("X-API-Version", "v1"))
                     .andExpect(MockMvcResultMatchers.status().isOk())
                     .andExpect(MockMvcResultMatchers.jsonPath("$[0]").value("Single Product"));
 
@@ -169,7 +174,63 @@ class ProductControllerV1Test {
     }
 
     @Nested
-    @DisplayName("GET /api/v1/products/{id}")
+    @DisplayName("GET /api/products V2")
+    class GetProductsTestsV2 {
+
+        @Test
+        @DisplayName("should return 200 with list of product responses")
+        void shouldReturn200WithProductResponses() throws Exception {
+            List<ProductResponse> responses = List.of(
+                    new ProductResponse("Product A", 10.99),
+                    new ProductResponse("Product B", 25.50)
+            );
+            when(productService.findAll()).thenReturn(responses);
+
+            mockMvc.perform(get("/api/products")
+                            .header("X-API-Version", "v2"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$").isArray())
+                    .andExpect(jsonPath("$.length()").value(2))
+                    .andExpect(jsonPath("$[0].name").value("Product A"))
+                    .andExpect(jsonPath("$[0].price").value(10.99))
+                    .andExpect(jsonPath("$[1].name").value("Product B"))
+                    .andExpect(jsonPath("$[1].price").value(25.50));
+
+            verify(productService).findAll();
+        }
+
+        @Test
+        @DisplayName("should return empty list when no products exist")
+        void shouldReturnEmptyListWhenNoProducts() throws Exception {
+            when(productService.findAll()).thenReturn(List.of());
+
+            mockMvc.perform(get("/api/products")
+                            .header("X-API-Version", "v2"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$").isArray())
+                    .andExpect(jsonPath("$.length()").value(0));
+
+            verify(productService).findAll();
+        }
+
+        @Test
+        @DisplayName("should delegate to productService findAll")
+        void shouldDelegateToProductServiceFindAll() throws Exception {
+            ProductResponse response = new ProductResponse("Single Product", 42.0);
+            when(productService.findAll()).thenReturn(List.of(response));
+
+            mockMvc.perform(get("/api/products")
+                            .header("X-API-Version", "v2"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0].name").value("Single Product"))
+                    .andExpect(jsonPath("$[0].price").value(42.0));
+
+            verify(productService).findAll();
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/products/{id}")
     class GetProductByIdTests {
 
         @Test
@@ -183,7 +244,7 @@ class ProductControllerV1Test {
 
             when(productService.findById(productId)).thenReturn(product);
 
-            mockMvc.perform(get("/api/v1/products/{id}", productId))
+            mockMvc.perform(get("/api/products/{id}", productId))
                     .andExpect(MockMvcResultMatchers.status().isOk())
                     .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(productId.toString()))
                     .andExpect(MockMvcResultMatchers.jsonPath("$.name").value("Test Product"))
@@ -203,7 +264,7 @@ class ProductControllerV1Test {
 
             when(productService.findById(productId)).thenReturn(product);
 
-            mockMvc.perform(get("/api/v1/products/{id}", productId))
+            mockMvc.perform(get("/api/products/{id}", productId))
                     .andExpect(MockMvcResultMatchers.status().isOk());
 
             verify(productService).findById(productId);

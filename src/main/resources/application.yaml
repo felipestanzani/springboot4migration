@@ -1,6 +1,14 @@
 spring:
   application:
     name: migrationdemo
+    
+  mvc:
+    apiversion:
+      supported: v1,v2
+      default: v1
+      enabled: true
+      use:
+        header: X-API-Version
 
 management:
   endpoint:

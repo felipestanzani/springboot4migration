@@ -1,6 +1,7 @@
 package com.felipestanzani.migrationdemo.controller;
 
 import com.felipestanzani.migrationdemo.dto.ProductRequest;
+import com.felipestanzani.migrationdemo.dto.ProductResponse;
 import com.felipestanzani.migrationdemo.model.Product;
 import com.felipestanzani.migrationdemo.service.interfaces.ProductService;
 import jakarta.validation.Valid;
@@ -19,8 +20,8 @@ import java.util.UUID;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/api/v1/products")
-public class ProductControllerV1 {
+@RequestMapping("/api/products")
+public class ProductController {
 
     private final ProductService productService;
 
@@ -30,9 +31,14 @@ public class ProductControllerV1 {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedProduct);
     }
 
-    @GetMapping
+    @GetMapping(version = "v1")
     public ResponseEntity<List<String>> getProducts() {
         return ResponseEntity.ok().body(productService.findAllNames());
+    }
+
+    @GetMapping(version = "v2")
+    public ResponseEntity<List<ProductResponse>> getProductsV2() {
+        return ResponseEntity.ok().body(productService.findAll());
     }
 
     @GetMapping("/{id}")

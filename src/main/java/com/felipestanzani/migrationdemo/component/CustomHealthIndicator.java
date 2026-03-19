@@ -1,7 +1,8 @@
 package com.felipestanzani.migrationdemo.component;
 
-import org.springframework.boot.actuate.health.Health;
-import org.springframework.boot.actuate.health.HealthIndicator;
+// Libs do Actuator foram movidas de pacote
+import org.springframework.boot.health.contributor.Health;
+import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.stereotype.Component;
 
 @Component
